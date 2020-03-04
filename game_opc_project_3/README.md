@@ -27,7 +27,8 @@ https://github.com/samdesignerd/OpenClassroom-Project_3
 ```
 
 
-## Taches
+## Taches restantes
+*Liste non exhaustive*
 #### Docs
 - Actualiser le diagramme de classe. En faire un pdf.
 - Faire un pdf du logigramme.
