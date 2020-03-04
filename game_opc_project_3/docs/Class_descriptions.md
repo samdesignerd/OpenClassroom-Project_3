@@ -39,7 +39,13 @@ class Game {
 }
 ```
 ### How does the lap-loop work ?
+*This is about to change*
 ``` swift
+// TODO: Make evolve the lap system. !! This !!
+// lapCount increments (this will accumulate the total number of turns)
+// and lapModulo reduces the value to an usable index to query the player array.
+
+
 class Game(){
   var playinPlayerIndex: Int = 0
   var playinPlayer: Player {
