@@ -11,7 +11,19 @@ Le fichier `/game_opc_project_3/docs/Class_descriptions.md` survole les fonction
 
 
 ```
-
+https://github.com/samdesignerd/OpenClassroom-Project_3
+├── game_opc_project_3
+│   ├── README.md
+│   ├── docs
+│   │   └── Class_descriptions.md
+│   ├── main.swift
+│   └── models
+│       ├── Character.swift
+│       ├── Game.swift
+│       ├── Player.swift
+│       └── Weapon.swift
+└── game_opc_project_3.xcodeproj
+    └─[..]
 ```
 
 
