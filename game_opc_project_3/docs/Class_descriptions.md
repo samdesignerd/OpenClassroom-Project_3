@@ -22,7 +22,7 @@ class Game {
   func initializeTeams(){}
   // Launch the game loop :
   func playLap(){
-    self.characterChoice()
+    self.attackingCharacterChoice()
     self.randomTreasure()
     self.attackingPhase()
   }

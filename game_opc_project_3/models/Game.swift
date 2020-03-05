@@ -13,14 +13,24 @@ class Game {
   private var attackingCharacter: Character?
   
   private var players: [Player] = []
-  private var attackingPlayerIndex: Int = 0
   var attackingPlayer: Player { return self.players[attackingPlayerIndex] }
-  var defendingPlayer: Player { return self.players[nextLapIndex] }
+  var defendingPlayer: Player { return self.players[defendingPlayerIndex] }
+  
+  // MARK: Lapping mecanics
+  private var lapCount: Int = 0
+  private var attackingPlayerIndex: Int {
+    return self.lapCount % 2
+  }
+  private var defendingPlayerIndex: Int {
+    return (self.lapCount + 1) % 2
+  }
+  func incrementLap() { self.lapCount += 1 }
   
   ///++++++++++ FIX
   init(){
     self.players = handlePlayerCreation() // woowoo1 fix and code initializeTeams method
   }
+  //TODO: Create character input initialisation procedure
   //TODO: Must remove this default behaviour and incorpore the users (human and machine) to the mix.
   private func handlePlayerCreation() -> [Player]{ // woowoo1
     return [
@@ -40,13 +50,8 @@ class Game {
   
   
   
-  // MARK: Lapping mecanics
-  private var nextLapIndex: Int {
-    return (self.attackingPlayerIndex + 1) % 2 // (self.players.count)
-  }
-  func goNextLap() {
-    self.attackingPlayerIndex = self.nextLapIndex
-  }
+  
+  
   
   
   
@@ -67,7 +72,7 @@ class Game {
     Thread.sleep(forTimeInterval: 0.5)
     self.attackingPhase()
     print("\n")
-    self.goNextLap()
+    self.incrementLap()
     Thread.sleep(forTimeInterval: 0.8)
   }
   // Conclusion. + ** Battle stats **.
@@ -85,16 +90,9 @@ class Game {
     }
   }
   
-
-  // TODO: Make evolve the lap system. !! This !!
-  // lapCount increments (this will accumulate the total number of turns)
-  // and lapModulo reduces the value to an usable index to query the player array.
-  
-  // TODO: Create character input initialisation procedure
   
   
-  
-  // MARK: Inside the loop (playLap)
+  // MARK: Inside the loop (game.playLap())
   // MARK: Choosing the attacking character
   private func characterChoosing(){ // Choosing the actor for this lap
     switch(game.attackingPlayer.type){
@@ -137,8 +135,9 @@ class Game {
   }
   
   
+  
   // TODO: YEAH
-  // MARK: Attack
+  // MARK: Attack Phase
   private func attackingPhase(){
     switch(game.attackingPlayer.type){
     case .human:
