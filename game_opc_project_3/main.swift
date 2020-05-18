@@ -7,9 +7,8 @@
 //
 
 import Foundation
-
 let game: Game = Game()
-while game.attackingPlayer.hasNotLost() {
+while game.winner == nil {
   game.playLap()
 }
 game.declareVictory()

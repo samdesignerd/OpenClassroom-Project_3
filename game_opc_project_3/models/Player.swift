@@ -14,29 +14,19 @@ class Player {
   var aliveCharacters: [Character] {
     return self.characters.filter { $0.isAlive }
   }
-  var randomAlivePersona: Character? {
-    return self.characters.filter { $0.isAlive }.randomElement()
-  }
-  let type: PlayerType // Enum: .human or .computer
-  init(name: String, type: PlayerType, characters: [Character]){
+  
+  init(name: String, characters: [Character]){
     self.name = name
     self.characters = characters
-    self.type = type
   }
   func hasNotLost() -> Bool {
     for persona in self.characters {
       if (persona.isAlive) { return true }
-    }
-    return false
+    }; return false
   }
-  static func printCharacterList(_ characters: [Character], killScore: Bool = false) {
+  static func printCharacterList(_ characters: [Character], killScore: Bool = false, offset: Int = 0) {
     for (i, character) in characters.enumerated() { // Printing the remaining characters
-      print("[\(i)] \(character.name)\n    \(character.life)HP    Attack: \(character.weapon.damage)\( killScore ? "    Kills: \(character.killScore)":"")")
+      print("[\(i + offset)] \(character.name)\n    \(character.life)HP    Attack: \(character.weapon.damage)\( killScore ? "    Kills: \(character.killScore)":"")")
     }
   }
-}
-
-enum PlayerType {
-  case computer
-  case human
 }

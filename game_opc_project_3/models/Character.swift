@@ -7,10 +7,8 @@
 //
 
 import Foundation
+
 class Character {
-  // "Private or not private ?" : this is one question.
-  // "Self or not self ?" is another.
-  
   private let _name: String
   var name: String { return _name }
   
@@ -39,12 +37,9 @@ class Character {
       opponentCharacter.die()
       self._killScore += 1
     }
-    
   }
-  func equip(_ weapon: Weapon){
-    self._weapon = weapon
-  }
-  func die(){
-    self._life = 0
-  }
+  func equip(_ weapon: Weapon){ self._weapon = weapon }
+  func die(){ self._life = 0 }
 }
+
+

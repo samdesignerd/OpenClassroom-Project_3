@@ -9,46 +9,52 @@
 import Foundation
 
 class Game {
-  private var charactersNameRegistry: Set<String> = []
+  private let playerPerGame = 4 // 2 players
+  private let characterPerPlayer = 3 // 3 characters per player
+  private var characterNameRegistry: Set<String> = [] // permits to check if a name is already registered
+  private var competitors: [Player] = [Player]()
+//  private var competitors: [Player] {
+//      return self.players.filter({ $0.hasNotLost() })
+//  }
+  var winner: Player? {
+    if competitors.count == 1 { return competitors[0] }
+    return nil
+  }
+  // MARK: Lap mecanics
+  private var lapCount: Int = 0
+  private var effectiveLapCount: Int = 0
+  private var contenderIndex: Int {
+    return self.lapCount % self.playerPerGame
+  }
+  func incrementLap() {
+    self.lapCount += 1
+  }
   private var attackingCharacter: Character?
   
-  private var players: [Player] = []
-  var attackingPlayer: Player { return self.players[attackingPlayerIndex] }
-  var defendingPlayer: Player { return self.players[defendingPlayerIndex] }
-  
-  // MARK: Lapping mecanics
-  private var lapCount: Int = 0
-  private var attackingPlayerIndex: Int {
-    return self.lapCount % 2
+  private var players: [Player] = [] // This contains all the players
+  var contender: Player { return self.players[contenderIndex] } // The player whose turn it is
+  var defendingPlayers: [Player] { // All the characters the player can attack with its choosen character
+    var players: [Player] = []
+    for player in self.competitors.filter({ ($0.name != self.contender.name) }) {
+      players.append(player)
+    }
+    return players
   }
-  private var defendingPlayerIndex: Int {
-    return (self.lapCount + 1) % 2
-  }
-  func incrementLap() { self.lapCount += 1 }
   
-  ///++++++++++ FIX
+
   init(){
-    self.players = handlePlayerCreation() // woowoo1 fix and code initializeTeams method
+    print("""
+    
+    \tFormation Developpeur SWIFT - Projet 3
+    \tCreated by Sam Boulanger on 02/03/2020.
+    ___________________________________________
+    
+    
+    """)
+    
+    self.initializeTeams()
+    self.competitors = self.players
   }
-  //TODO: Create character input initialisation procedure
-  //TODO: Must remove this default behaviour and incorpore the users (human and machine) to the mix.
-  private func handlePlayerCreation() -> [Player]{ // woowoo1
-    return [
-      Player( name: "Samuelito", type: .human, characters: [ // set those from input (CLI)
-        Character("Ganondorf"),
-        Character("Samus"),
-        Character("Yoshi"),
-      ]),
-      Player( name: "MrPseudoRandom", type: .computer, characters: [
-        Character("Computer_01"),
-        Character("Computer_02"),
-        Character("Computer_03"),
-      ])
-    ]
-  }
-  ///+++++++++
-  
-  
   
   
   
@@ -57,36 +63,57 @@ class Game {
   
   
   // MARK: Game Lifecycle
+  
+  
   // Introduction. Team building.
   private func initializeTeams(){ // TODO: UI !!!!
     // triggered at initialisation.
     // Asks players to choose characters for their team
-    
+    for playerIndex in 1...self.playerPerGame {
+      print("Player #\(playerIndex)\nPlease enter the name of your character followed by enter.\nYou have \(self.characterPerPlayer) character\(self.characterPerPlayer > 1 ? "s" : "") to name.")
+      var characters: [Character] = []
+      for _ in 1...self.characterPerPlayer {
+        let newName: String = self.askNewCharacterName()
+        characterNameRegistry.insert(newName)
+        characters.append(Character(newName))
+      }
+      self.players.append(Player(name: "Player #\(playerIndex)", characters: characters)) // creating the player instance
+      Thread.sleep(forTimeInterval: 0.5)
+      print("Player #\(playerIndex) created.\n")
+      Thread.sleep(forTimeInterval: 0.5)
+    }
   }
+  
   // Launch the game loop :
   func playLap(){
-    print("[ New lap ] Player: \(self.attackingPlayer.name)")
-    self.characterChoosing()
-    Thread.sleep(forTimeInterval: 0.5)
-    self.randomTreasure()
-    Thread.sleep(forTimeInterval: 0.5)
-    self.attackingPhase()
-    print("\n")
+    if self.contender.hasNotLost() {
+      print("[ New lap ]     Player: \(self.contender.name)     [ New lap ]")
+      self.characterChoosing()
+      Thread.sleep(forTimeInterval: 0.5)
+      self.randomTreasure()
+      Thread.sleep(forTimeInterval: 0.5)
+      self.attackingPhase()
+      print("\n")
+      
+      self.updateCompetitors()
+      self.effectiveLapCount += 1
+    }
     self.incrementLap()
     Thread.sleep(forTimeInterval: 0.8)
   }
+  
   // Conclusion. + ** Battle stats **.
   func declareVictory(){
-    print("\(self.attackingPlayer.name) has no more characters. \(self.attackingPlayer.name) looses.")
     Thread.sleep(forTimeInterval: 1.0)
-    print("\(self.defendingPlayer.name) wins.")
+    print("\(self.winner!.name) wins.")
     Thread.sleep(forTimeInterval: 1.4)
     print("\n\n\n[END OF GAME STATS]")
     Thread.sleep(forTimeInterval: 0.6)
+    print("You played \(self.effectiveLapCount) laps.")
     self.players.forEach { player in
       print("\(player.name) : \(player.hasNotLost() ? "WINNER" : "LOOSER")")
       Player.printCharacterList(player.characters, killScore: true)
-      print("")
+      print("\nHave a good day!\n")
     }
   }
   
@@ -95,17 +122,10 @@ class Game {
   // MARK: Inside the loop (game.playLap())
   // MARK: Choosing the attacking character
   private func characterChoosing(){ // Choosing the actor for this lap
-    switch(game.attackingPlayer.type){
-      case .human:
-        self.attackingCharacter = self.askTargetCharacter(
-          "Please choose the character you want to attack with",
-          characterList: self.attackingPlayer.aliveCharacters
-        )
-        print("You choosed \(self.attackingCharacter!.name).\n")
-      case .computer:
-        self.attackingCharacter = game.attackingPlayer.randomAlivePersona!
-        print("Computer will attack with \(self.attackingCharacter!.name)")
-    }
+    self.attackingCharacter = self.askTargetCharacter(
+      "Please choose the character you want to attack with",
+      targetPlayers: [self.contender]
+    )
   }
   
   //  MARK: Treasure chest
@@ -116,48 +136,41 @@ class Game {
   }
   private func openTreasure(){ // looting
     let weapon = Weapon.random()
-    switch(game.attackingPlayer.type){
-      case .human:
-        print("""
-        You stepped on a treasure. It contains a weapon
-        with \(weapon.damage) damage points.
-        Do you want to equip it ? (Yes or No)
-        """)
-        if (self.askYesOrNo()) { self.attackingCharacter!.equip(weapon) }
-      case .computer:
-        let stronger: Bool = (weapon.damage > self.attackingCharacter!.weapon.damage)
-        print("""
-        The opponent has found a weapon with \(weapon.damage) damage points
-        in a treasure box and will \(stronger ? "":"not ")equip it.
-        """)
-        if (stronger) { self.attackingCharacter!.equip(weapon) }
-    }
+    print("""
+    You stepped on a treasure. It contains a weapon
+    with \(weapon.damage) damage points.
+    Do you want to equip it ? (Yes or No)
+    """)
+    if (self.askYesOrNo()) { self.attackingCharacter!.equip(weapon) }
   }
-  
-  
-  
-  // TODO: YEAH
   // MARK: Attack Phase
   private func attackingPhase(){
-    switch(game.attackingPlayer.type){
-    case .human:
-      self.attackingCharacter!.attack(
-        self.askTargetCharacter(
-          "Please choose the character you want to attack",
-          characterList: self.defendingPlayer.aliveCharacters
-        )
+    self.attackingCharacter!.attack(self.askTargetCharacter(
+        "Please choose the character you want to attack",
+        targetPlayers: self.defendingPlayers
       )
-    case .computer:
-      self.attackingCharacter!.attack(
-        self.defendingPlayer.randomAlivePersona!
-      )
-    }
+    )
   }
+  // MARK: Updating competitors
+  // Looking any loser
+  private func updateCompetitors(){
+    for contender in self.competitors{
+      if !contender.hasNotLost() {
+        print("\(contender.name) has no more characters. \(contender.name) loses.\n")
+      }
+    }
+    self.competitors = self.competitors.filter({ $0.hasNotLost() })
+  }
+  
   
   
   
   
   // MARK: USER INTERACTION HELPERS
+  //  askYesOrNo() -> Bool
+  //  askCappedNumber(_ max: Int) -> Int
+  //  askNewCharacterName() -> String
+  //  askTargetCharacter(_ inquiry: String, characterList: [Character]) -> Character
   func askYesOrNo() -> Bool{ // yes or no helper
     while true {
       if let input = readLine() {
@@ -179,12 +192,40 @@ class Game {
           }
         }
       }
-      print("Please write a number between 0 and \(max).")
+      print("Please write a number between 0 and \(max-1).")
     }
   }
-  func askTargetCharacter(_ inquiry: String, characterList: [Character]) -> Character { // Handles asking the character to the user
-    print("\(inquiry) (0-\(characterList.count - 1)) :")
-    Player.printCharacterList(characterList)
-    return characterList[self.askCappedNumber(characterList.count)]
+  func askNewCharacterName() -> String{
+    while true {
+      if let input = readLine() {
+        if input == "" {
+          print("Please write something.")
+        } else {
+          if !self.characterNameRegistry.contains(input) {
+            return input
+          }
+          print("Character name is already taken, please choose another one.")
+        }
+      }
+    }
+  }
+  func askTargetCharacter(_ inquiry: String, targetPlayers: [Player]) -> Character { // Handles asking the character to the user
+    let characterCount: Int = targetPlayers.reduce(0){ $0 + $1.aliveCharacters.count }
+    print("\(inquiry) (0-\(characterCount - 1)) :")
+//    if ((targetPlayers.count == 0)) { print("error")}
+    if (targetPlayers.count == 1){
+      print("- \(targetPlayers[0].name)'s characters :")
+      Player.printCharacterList(targetPlayers[0].aliveCharacters)
+      return targetPlayers[0].aliveCharacters[self.askCappedNumber(characterCount)]
+    } else {
+      let characters: [Character] = targetPlayers.reduce([Character]()){ $0 + $1.aliveCharacters }
+      var characterOffset = 0
+      for player in targetPlayers {
+        print("- \(player.name)'s characters :")
+        Player.printCharacterList(player.aliveCharacters, offset: characterOffset)
+        characterOffset += player.aliveCharacters.count
+      }
+      return characters[self.askCappedNumber(characterCount)]
+    }
   }
 }
