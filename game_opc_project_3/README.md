@@ -29,14 +29,11 @@ https://github.com/samdesignerd/OpenClassroom-Project_3
 
 ## Taches restantes
 *Liste non exhaustive*
+#### Code source
+- Enlever le superflu du code.
+- Améliorer la lisibilité de l'énoncé de la ligne de commande.
 #### Docs
-- Actualiser le diagramme de classe. En faire un pdf.
-- Faire un pdf du logigramme.
-- Integrer le diagramme de classe et le logigramme à la doc.
-#### Programme
-- Coder la procédure d'initialisation du jeux.
-- Réusiner la mécanique de tours (laps).
-- *Mécanique de heal ?*
+- Un support (Powerpoint ou PDF) décrivant l’architecture du jeu (organigramme des classes ou autre).
 
 ## [Livrables](https://openclassrooms.com/fr/projects/59/assignment)
 - Le code source sous forme de projet Xcode (prêt à compiler, écrit en Swift et en anglais.)
