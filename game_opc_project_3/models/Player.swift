@@ -26,7 +26,11 @@ class Player {
   }
   static func printCharacterList(_ characters: [Character], killScore: Bool = false, offset: Int = 0) {
     for (i, character) in characters.enumerated() { // Printing the remaining characters
-      print("[\(i + offset)] \(character.name)\n    \(character.life)HP    Attack: \(character.weapon.damage)\( killScore ? "    Kills: \(character.killScore)":"")")
+//      print("[\(i + offset)] \(character.name)\n    \(character.life)HP    Attack: \(character.weapon.damage)\( killScore ? "    Kills: \(character.killScore)":"")")
+      print("""
+            [\(i + offset)] \(character.characterAbstractString())
+                    \(killScore ? character.characterStatString()+"\n" : "")
+            """)
     }
   }
 }

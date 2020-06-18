@@ -9,13 +9,11 @@
 import Foundation
 
 class Game {
-  private let playerPerGame = 4 // 2 players
-  private let characterPerPlayer = 3 // 3 characters per player
+  static let characterTypes = ["mage", "warrior", "dwarf", "peasant"]
+  private let playerPerGame = 2 // Supports multiplayer > 2
+  private let characterPerPlayer = 2 // 3 characters per player
   private var characterNameRegistry: Set<String> = [] // permits to check if a name is already registered
   private var competitors: [Player] = [Player]()
-//  private var competitors: [Player] {
-//      return self.players.filter({ $0.hasNotLost() })
-//  }
   var winner: Player? {
     if competitors.count == 1 { return competitors[0] }
     return nil
@@ -70,12 +68,25 @@ class Game {
     // triggered at initialisation.
     // Asks players to choose characters for their team
     for playerIndex in 1...self.playerPerGame {
-      print("Player #\(playerIndex)\nPlease enter the name of your character followed by enter.\nYou have \(self.characterPerPlayer) character\(self.characterPerPlayer > 1 ? "s" : "") to name.")
+      print("Player #\(playerIndex)\nPlease enter the name of your character followed by enter.\nYou have \(self.characterPerPlayer) character\(self.characterPerPlayer > 1 ? "s" : "") to create.")
       var characters: [Character] = []
       for _ in 1...self.characterPerPlayer {
-        let newName: String = self.askNewCharacterName()
+        let newName: String = self.UIaskNewCharacterName() // returns only new names
         characterNameRegistry.insert(newName)
-        characters.append(Character(newName))
+        var newCharacter: Character
+        switch self.UIaskCharacterType() {
+        case "mage":
+          newCharacter = Mage(newName)
+        case "warrior":
+          newCharacter = Warrior(newName)
+        case "dwarf":
+          newCharacter = Dwarf(newName)
+        default:
+          newCharacter = Character(newName)
+        }
+        print(newCharacter.characterAbstractString())
+        print()
+        characters.append(newCharacter)
       }
       self.players.append(Player(name: "Player #\(playerIndex)", characters: characters)) // creating the player instance
       Thread.sleep(forTimeInterval: 0.5)
@@ -90,9 +101,9 @@ class Game {
       print("[ New lap ]     Player: \(self.contender.name)     [ New lap ]")
       self.characterChoosing()
       Thread.sleep(forTimeInterval: 0.5)
-      self.randomTreasure()
+      self.randomTreasure(character: self.attackingCharacter!)
       Thread.sleep(forTimeInterval: 0.5)
-      self.attackingPhase()
+      self.attackPhase()
       print("\n")
       
       self.updateCompetitors()
@@ -122,15 +133,19 @@ class Game {
   // MARK: Inside the loop (game.playLap())
   // MARK: Choosing the attacking character
   private func characterChoosing(){ // Choosing the actor for this lap
-    self.attackingCharacter = self.askTargetCharacter(
+    self.attackingCharacter = self.UIaskTargetCharacter(
       "Please choose the character you want to attack with",
       targetPlayers: [self.contender]
     )
   }
   
   //  MARK: Treasure chest
-  private func randomTreasure(){
-    if (Double.random(in: 0.0..<1.0) < 0.9){
+  private func randomTreasure(character: Character){
+    var luck: Float = 0.2
+    if let dwarf = character as? Dwarf { // <- Dwarf buff
+        luck *= dwarf.luckBuff
+    }
+    if Float.random(in: 0.0..<1.0) < luck {
       self.openTreasure()
     }
   }
@@ -141,11 +156,24 @@ class Game {
     with \(weapon.damage) damage points.
     Do you want to equip it ? (Yes or No)
     """)
-    if (self.askYesOrNo()) { self.attackingCharacter!.equip(weapon) }
+    if (self.UIaskYesOrNo()) { self.attackingCharacter!.equip(weapon) }
   }
+  
   // MARK: Attack Phase
-  private func attackingPhase(){
-    self.attackingCharacter!.attack(self.askTargetCharacter(
+  private func attackPhase(){
+    if let mage = self.attackingCharacter! as? Mage {
+      // check if mage, propose to heal instead of attacking
+      if self.UIaskMageCureOrNo() {
+        mage.heal(
+          self.UIaskTargetCharacter(
+            "Please choose the character you want to heal",
+            targetPlayers: self.competitors // can heal anyone
+          )
+        )
+        return
+      }
+    }
+    self.attackingCharacter!.attack( self.UIaskTargetCharacter(
         "Please choose the character you want to attack",
         targetPlayers: self.defendingPlayers
       )
@@ -166,12 +194,15 @@ class Game {
   
   
   
-  // MARK: USER INTERACTION HELPERS
-  //  askYesOrNo() -> Bool
-  //  askCappedNumber(_ max: Int) -> Int
-  //  askNewCharacterName() -> String
-  //  askTargetCharacter(_ inquiry: String, characterList: [Character]) -> Character
-  func askYesOrNo() -> Bool{ // yes or no helper
+  // MARK: USER INTERACTION PRINT HELPERS
+  //  UIaskYesOrNo() -> Bool
+  //  UIaskCappedNumber(_ max: Int) -> Int
+  //  UIaskNewCharacterName() -> String
+  //  UIaskTargetCharacter(_ inquiry: String, characterList: [Character]) -> Character
+  
+  //  UIaskCharacterType() -> CharacterTypes
+  //  UIaskMageCureOrNo() -> Bool
+  func UIaskYesOrNo() -> Bool{ // yes or no helper
     while true {
       if let input = readLine() {
         if ["yes", "y"].contains(input.lowercased()) {
@@ -183,7 +214,7 @@ class Game {
       print("Incorrect entry. Please choose between yes or no.")
     }
   }
-  func askCappedNumber(_ max: Int) -> Int{ // choose a number in a list helper
+  func UIaskCappedNumber(_ max: Int) -> Int{ // choose a number in a list helper
     while true {
       if let input = readLine() {
         if let number = Int(input) {
@@ -195,7 +226,8 @@ class Game {
       print("Please write a number between 0 and \(max-1).")
     }
   }
-  func askNewCharacterName() -> String{
+  func UIaskNewCharacterName() -> String{
+    print("Name your character :")
     while true {
       if let input = readLine() {
         if input == "" {
@@ -209,14 +241,19 @@ class Game {
       }
     }
   }
-  func askTargetCharacter(_ inquiry: String, targetPlayers: [Player]) -> Character { // Handles asking the character to the user
+  func UIaskNewCharacterType() -> String{
+    while true {
+      return "Mage"
+    }
+  }
+  func UIaskTargetCharacter(_ inquiry: String, targetPlayers: [Player]) -> Character { // Handles asking the character to the user
     let characterCount: Int = targetPlayers.reduce(0){ $0 + $1.aliveCharacters.count }
     print("\(inquiry) (0-\(characterCount - 1)) :")
 //    if ((targetPlayers.count == 0)) { print("error")}
     if (targetPlayers.count == 1){
       print("- \(targetPlayers[0].name)'s characters :")
       Player.printCharacterList(targetPlayers[0].aliveCharacters)
-      return targetPlayers[0].aliveCharacters[self.askCappedNumber(characterCount)]
+      return targetPlayers[0].aliveCharacters[self.UIaskCappedNumber(characterCount)]
     } else {
       let characters: [Character] = targetPlayers.reduce([Character]()){ $0 + $1.aliveCharacters }
       var characterOffset = 0
@@ -225,7 +262,39 @@ class Game {
         Player.printCharacterList(player.aliveCharacters, offset: characterOffset)
         characterOffset += player.aliveCharacters.count
       }
-      return characters[self.askCappedNumber(characterCount)]
+      return characters[self.UIaskCappedNumber(characterCount)]
     }
   }
+  
+  
+  
+  
+  
+  
+  func UIaskCharacterType() -> String {
+    let typeList: String = Game.characterTypes.map({ "\($0)" }).joined(separator: ", ")
+    print("Choose a type for your Character (\(typeList)) :")
+    
+    while true {
+      if let input = readLine() {
+        // better check if is in [Game.characterTypes] :
+        // if not return peasant
+        
+        if Game.characterTypes.contains(input.lowercased()){
+          return input.lowercased()
+        } else {
+          print("Incorrect entry. Please choose between those : \(typeList)")
+        }
+      }
+    }
+  }
+  
+  func UIaskMageCureOrNo() -> Bool {
+    print("Do you want to cure a character ?")
+    return self.UIaskYesOrNo()
+  }
 }
+
+
+
+  

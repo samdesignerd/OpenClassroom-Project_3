@@ -11,8 +11,11 @@ import Foundation
 class Weapon{
   private let _damage: Int
   var damage: Int { return self._damage}
+  
   init(_ damage: Int){ self._damage = damage }
-  static func random(min: Int = 10, max: Int = 37) -> Weapon{ // change default max attack here
+  
+  // change default max attack here :
+  static func random(min: Int = 10, max: Int = 37) -> Weapon{
     return Weapon(Int.random(in: (min >= max ? 1 : min)..<max))
   }
 }
